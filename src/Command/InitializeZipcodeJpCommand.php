@@ -1,6 +1,7 @@
 <?php
 namespace ZipcodeJp\Command;
 
+use ZipcodeJp\Util\ZipcodeJpUtils;
 use Cake\Console\Arguments;
 use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
@@ -67,6 +68,7 @@ class InitializeZipcodeJpCommand extends Command
 
         // php7でパースずれが発生しないcsv読み込み（sjis、CRLF）
         // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
+        // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
         setlocale(LC_ALL, 'English_United States.1252');
         $csv = new SplFileObject("php://filter/read=convert.iconv.cp932%2Futf-8/resource=" . self::KEN_ALL_CSV_PATH, 'rb');
         $csv->setFlags(
@@ -80,163 +82,50 @@ class InitializeZipcodeJpCommand extends Command
             if (count($row) !== 15) {
                 $this->abort(self::CODE_ERROR);
             }
-            $rows[] = $row;
-        }
-        debug(memory_get_usage());
-        debug(count($rows));
 
-
-        // // php7でsjisのcsvを読み込む
-        // // 参考：https://mgng.mugbum.info/1014
-        // $str = file_get_contents(self::KEN_ALL_CSV_PATH);
-        // $is_win = strpos(PHP_OS, "WIN") === 0;
-        // if ($is_win) {
-        //     setlocale(LC_ALL, "Japanese_Japan.932");
-        // } else {
-        //     setlocale(LC_ALL, "ja_JP.UTF-8");
-        //     $str = mb_convert_encoding($str, "UTF-8", "SJIS-win");
-        // }
-        // $fp = fopen("php://temp", "r+");
-        // fwrite($fp, str_replace(array("\r\n", "\r" ), "\n", $str));
-        // rewind($fp);
-        // while($row = fgetcsv($fp)) {
-        //     if ($is_win) {
-        //         $row = array_map(function($val){
-        //             return mb_convert_encoding($val, "UTF-8", "SJIS-win");
-        //         }, $row);
-        //     }
-        //     if (count($row) !== 15) {
-        //         debug($row);
-        //         exit;
-        //     } else {
-        //         debug("OK");
-        //     }
-        // }
-        // fclose($fp);
-
-
-
-        // // // csvファイルを変換(sjis→utf8、ダブルクォーテーション削除)
-        // $csv_data = file_get_contents(self::KEN_ALL_CSV_PATH);
-        // $csv_data = mb_convert_encoding($csv_data, 'UTF-8', 'sjis-win');
-        // // $csv_data = str_replace('"', '', $csv_data);
-        // file_put_contents(self::KEN_ALL_CSV_PATH, $csv_data, LOCK_EX);
-
-        // // csvをパース
-        // $records = $this->load_postal_cd_csv(self::KEN_ALL_CSV_PATH);
-        // debug($records);
-
-        // //
-        // $fp = fopen(self::KEN_ALL_CSV_PATH, "r");
-        // while ($row = fgetcsv($fp)) {
-        //     debug(count($row));
-        //     debug($row[2]);
-        //     debug($row[6]);
-        //     debug($row[7]);
-        //     debug($row[8]);
-        // }
-        // fclose($fp);
-
-
-        // csv読み込み(sjis,ヘッダ行なし)
-        // $csv = new SplFileObject(self::KEN_ALL_CSV_PATH, 'rb');
-        // $csv->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE);
-        // foreach ($csv as $i => $row) {
-        //     debug(count($row));
-        //     debug($row);
-        //     if (count($row) !== 15) {
-        //         $this->abort();
-        //     }
-        //     var_dump($row);
-        // }
-
-    }
-
-
-    //郵便番号CSVデータを読込む
-    //町域名が分割されている場合はマージする
-    private function load_postal_cd_csv($path)
-    {
-        $is_win = strpos(PHP_OS, "WIN") === 0;
-        if ($is_win) {
-            setlocale(LC_ALL, "Japanese_Japan.932");
-        } else {
-
-        }
-
-        $records = array();
-
-        $merge = array();
-        $bracketed = FALSE;
-
-        $fp = fopen($path, 'r');
-        $ret = TRUE;
-        $row = 0;
-        while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
-            $chouiki = $data[8];
-
-            $row = NULL;
-            $merged = FALSE;
-
-            //括弧は出現していない
-            if( ! $bracketed) {
-                if( ! $this->contains($chouiki, '（') ) {
-                    //括弧の無い通常の行
-                    $row = $data;
-                } else {
-                    if( $this->contains($chouiki, '）') ) {
-                        //括弧の含まれる通常の行
-                        $row = $data;
-                    } else {
-                        //閉じ括弧が無い
-                        $bracketed = TRUE;
-                        $merge = array($data);
-                    }
-                }
-            } else {
-                if( $this->contains($chouiki, '）') ) {
-                    //閉じ括弧あり(ここまでをマージ)
-                    $bracketed = FALSE;
-                    $merge[] = $data;
-                    $row = $this->merge_rows($merge);
-                    $merge = array();
-                    $merged = TRUE;
-                } else {
-                    //閉じ括弧が無い
-                    //3行以上に分割された行
-                    $merge[] = $data;
-                }
+            // 郵便番号データの加工処理
+            // 参考：http://zipcloud.ibsnet.co.jp/
+            $zipcode = $row[2];
+            $chouiki = $row[8];
+            if (array_key_exists($zipcode, $rows)) {
+                // 町域が2行以上に分かれているとき2行目以降をスキップ
+                continue;
+            } elseif ($chouiki === '以下に掲載がない場合') {
+                // 以下のケースのとき町域削除
+                // 01101,"060  ","0600000","ﾎｯｶｲﾄﾞｳ","ｻｯﾎﾟﾛｼﾁｭｳｵｳｸ","ｲｶﾆｹｲｻｲｶﾞﾅｲﾊﾞｱｲ","北海道","札幌市中央区","以下に掲載がない場合",0,0,0,0,0,0
+                $row[8] = '';
+            } elseif (ZipcodeJpUtils::ends_with($chouiki, 'の次に番地がくる場合')) {
+                // 以下のケースのとき町域削除
+                // 08546,"30604","3060433","ｲﾊﾞﾗｷｹﾝ","ｻｼﾏｸﾞﾝｻｶｲﾏﾁ","ｻｶｲﾏﾁﾉﾂｷﾞﾆﾊﾞﾝﾁｶﾞｸﾙﾊﾞｱｲ","茨城県","猿島郡境町","境町の次に番地がくる場合",0,0,0,0,0,0
+                $row[8] = '';
+            } elseif (ZipcodeJpUtils::ends_with($chouiki, '一円') && mb_strlen($chouiki) > 2) {
+                // 以下のケースのとき町域削除
+                // 13362,"10003","1000301","ﾄｳｷｮｳﾄ","ﾄｼﾏﾑﾗ","ﾄｼﾏﾑﾗｲﾁｴﾝ","東京都","利島村","利島村一円",0,0,0,0,0,0
+                $row[8] = '';
+            } elseif (ZipcodeJpUtils::contain($chouiki, '（') && ZipcodeJpUtils::ends_with($chouiki, '階）')) {
+                // 以下のケースのとき町域を加工
+                // 04101,"980  ","9806101","ﾐﾔｷﾞｹﾝ","ｾﾝﾀﾞｲｼｱｵﾊﾞｸ","ﾁｭｳｵｳｱｴﾙ(1ｶｲ)","宮城県","仙台市青葉区","中央アエル（１階）",0,0,0,0,0,0
+                $replace = [
+                    '（' => '',
+                    '）' => '',
+                ];
+                $row[8] = str_replace(array_keys($replace), array_values($replace), $chouiki);
+            } elseif (ZipcodeJpUtils::contain($chouiki, '（') && ZipcodeJpUtils::ends_with($chouiki, '）')) {
+                // 以下のケースのとき町域を加工
+                // 01215,"07901","0790177","ﾎｯｶｲﾄﾞｳ","ﾋﾞﾊﾞｲｼ","ｶﾐﾋﾞﾊﾞｲﾁｮｳ(ｷｮｳﾜ､ﾐﾅﾐ)","北海道","美唄市","上美唄町（協和、南）",1,0,0,0,0,0
+                $row[8] = mb_substr($chouiki, 0, mb_strpos($chouiki, '（'));
+            } elseif (ZipcodeJpUtils::contain($chouiki, '（') && !ZipcodeJpUtils::ends_with($chouiki, '）')) {
+                // 町域が2行以上に分かれているとき1行目の町域を加工
+                // 40206,"826  ","8260043","ﾌｸｵｶｹﾝ","ﾀｶﾞﾜｼ","ﾅﾗ(ｱｵﾊﾞﾁｮｳ､ｵｵｳﾗ､ｶｲｼｬﾏﾁ､ｶｽﾐｶﾞｵｶ､ｺﾞﾄｳｼﾞﾆｼﾀﾞﾝﾁ､ｺﾞﾄｳｼﾞﾋｶﾞｼﾀﾞﾝﾁ､ﾉｿﾞﾐｶﾞｵｶ､","福岡県","田川市","奈良（青葉町、大浦、会社町、霞ケ丘、後藤寺西団地、後藤寺東団地、希望ケ丘、",0,0,0,0,0,0
+                // 40206,"826  ","8260043","ﾌｸｵｶｹﾝ","ﾀｶﾞﾜｼ","ﾏﾂﾉｷ､ﾐﾂｲｺﾞﾄｳｼﾞ､ﾐﾄﾞﾘﾏﾁ､ﾂｷﾐｶﾞｵｶ)","福岡県","田川市","松の木、三井後藤寺、緑町、月見ケ丘）",0,0,0,0,0,0
+                $row[8] = mb_substr($chouiki, 0, mb_strpos($chouiki, '（'));
             }
-
-            if($row) $records[] = $row;
-
-            //if($merged) {
-            //  echo $row[5].'<br />';
-            //  echo $row[8].'<br />';
-            //}
+            $rows[$zipcode] = $row;
         }
-        return $records;
-    }
 
-    //行マージ
-    private function merge_rows($rows)
-    {
-        $prev_chouiki_kana = $rows[0][5];
-        $ret = $rows[0];
-        for($i=1; $i<count($rows); $i++) {
-            $row = $rows[$i];
-            $ret[8] .= $row[8]; //町域(漢字)をマージ
+        // データ登録
+        foreach ($rows as $row) {
 
-            //カナは前行と同じものが繰り返し出現することがあるようなので重複は除く
-            if($prev_chouiki_kana != $row[5])
-                $ret[5] .= $row[5]; //町域(カナ)をマージ
         }
-        return $ret;
-    }
-
-    private function contains($chouiki, $str)
-    {
-        $pos = mb_strpos($chouiki, $str);
-        return !($pos === FALSE);
     }
 }
