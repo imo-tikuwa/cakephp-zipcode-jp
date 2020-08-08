@@ -11,6 +11,8 @@ use ZipArchive;
 
 /**
  * InitializeZipcodeJp command.
+ *
+ * @property \ZipcodeJp\Model\Table\ZipcodeJpsTable $ZipcodeJps
  */
 class InitializeZipcodeJpCommand extends Command
 {
@@ -124,8 +126,36 @@ class InitializeZipcodeJpCommand extends Command
         }
 
         // データ登録
-        foreach ($rows as $row) {
+        $this->loadModel('ZipcodeJps');
+        $this->ZipcodeJps->getConnection()->transactional(function ($conn) use ($rows) {
 
-        }
+            // 既存のデータをトランケート
+            $sqls = $this->ZipcodeJps->getSchema()->truncateSql($this->ZipcodeJps->getConnection());
+            foreach ($sqls as $sql) {
+                $this->ZipcodeJps->getConnection()->execute($sql)->execute();
+            }
+
+            $data = [];
+            foreach ($rows as $row) {
+                $data[] = [
+                    'zipcode' => $row[2],
+                    'pref' => $row[6],
+                    'city' => $row[7],
+                    'address' => $row[8],
+                ];
+
+                // 10000件毎に登録
+                if (count($data) % 10000 === 0) {
+                    $entities = $this->ZipcodeJps->newEntities($data, ['validate' => false]);
+                    $this->ZipcodeJps->saveMany($entities, ['validate' => false]);
+                    $data = [];
+                }
+            }
+            // 残りを登録
+            if (count($data) > 0) {
+                $entities = $this->ZipcodeJps->newEntities($data, ['validate' => false]);
+                $this->ZipcodeJps->saveMany($entities, ['validate' => false]);
+            }
+        });
     }
 }
