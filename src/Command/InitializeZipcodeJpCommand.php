@@ -125,37 +125,36 @@ class InitializeZipcodeJpCommand extends Command
             $rows[$zipcode] = $row;
         }
 
-        // データ登録
+        // 既存のデータをトランケートしてから最新のデータを登録
         $this->loadModel('ZipcodeJps');
-        $this->ZipcodeJps->getConnection()->transactional(function ($conn) use ($rows) {
+        $sqls = $this->ZipcodeJps->getSchema()->truncateSql($this->ZipcodeJps->getConnection());
+        foreach ($sqls as $sql) {
+            $this->ZipcodeJps->getConnection()->execute($sql)->execute();
+        }
 
-            // 既存のデータをトランケート
-            $sqls = $this->ZipcodeJps->getSchema()->truncateSql($this->ZipcodeJps->getConnection());
-            foreach ($sqls as $sql) {
-                $this->ZipcodeJps->getConnection()->execute($sql)->execute();
+        $query = $this->getZipcodeJpsBulkInsertQuery();
+        $count = 0;
+        $row_count = count($rows);
+        foreach ($rows as $row) {
+            $query->values([
+                'zipcode' => $row[2],
+                'pref' => $row[6],
+                'city' => $row[7],
+                'address' => $row[8],
+            ]);
+            $count++;
+            if ($count % 10000 === 0 || $count === $row_count) {
+                $query->execute();
+                $query = $this->getZipcodeJpsBulkInsertQuery();
             }
+        }
+    }
 
-            $data = [];
-            foreach ($rows as $row) {
-                $data[] = [
-                    'zipcode' => $row[2],
-                    'pref' => $row[6],
-                    'city' => $row[7],
-                    'address' => $row[8],
-                ];
-
-                // 10000件毎に登録
-                if (count($data) % 10000 === 0) {
-                    $entities = $this->ZipcodeJps->newEntities($data, ['validate' => false]);
-                    $this->ZipcodeJps->saveMany($entities, ['validate' => false]);
-                    $data = [];
-                }
-            }
-            // 残りを登録
-            if (count($data) > 0) {
-                $entities = $this->ZipcodeJps->newEntities($data, ['validate' => false]);
-                $this->ZipcodeJps->saveMany($entities, ['validate' => false]);
-            }
-        });
+    /**
+     * zipcode_jpsテーブルにバルクインサートを行うクエリビルダを返す
+     */
+    private function getZipcodeJpsBulkInsertQuery() {
+        return $this->ZipcodeJps->query()
+        ->insert(['zipcode', 'pref', 'city', 'address']);
     }
 }
