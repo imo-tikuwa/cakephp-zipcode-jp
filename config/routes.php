@@ -7,6 +7,8 @@ Router::plugin(
     'ZipcodeJp',
     ['path' => '/zipcode-jp'],
     function (RouteBuilder $routes) {
+        $routes->setExtensions(['json']);
+        $routes->connect('/:zipcode', ['controller' => 'Search', 'action' => 'index']);
         $routes->fallbacks(DashedRoute::class);
     }
 );
