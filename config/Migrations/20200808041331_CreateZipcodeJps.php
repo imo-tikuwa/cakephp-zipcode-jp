@@ -26,6 +26,7 @@ class CreateZipcodeJps extends AbstractMigration
             'limit' => 255,
             'null' => false,
         ])
+        ->addIndex(['zipcode'], ['unique' => true, 'name' => 'zipcode_idx'])
         ->create();
     }
 
