@@ -21,6 +21,8 @@ class SearchController extends AppController
         parent::beforeFilter($event);
         $this->loadComponent('RequestHandler');
         $this->viewBuilder()->setClassName('Json');
+
+        $this->loadModel('ZipcodeJps');
     }
 
     /**
@@ -31,21 +33,7 @@ class SearchController extends AppController
     public function index()
     {
         $zipcode = $this->request->getParam('zipcode');
-        $results = null;
-        if (!is_null($zipcode)) {
-            $this->loadModel('ZipcodeJps');
-            $results = $this->ZipcodeJps->find()
-            ->select([
-                'pref',
-                'city',
-                'address',
-            ])
-            ->where([
-                'zipcode' => $zipcode,
-            ])
-            ->enableHydration(false)
-            ->toArray();
-        }
+        $results = $this->ZipcodeJps->findByZipcode($zipcode);
         $this->set([
             'results' => $results,
             '_serialize' => 'results',

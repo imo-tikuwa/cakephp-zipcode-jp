@@ -73,4 +73,28 @@ class ZipcodeJpsTable extends Table
 
         return $validator;
     }
+
+    /**
+     * 郵便番号を元に住所情報を取得する
+     * @param string $zipcode 郵便番号
+     * @return array|null
+     */
+    public function findByZipcode($zipcode = null)
+    {
+        if (is_null($zipcode)) {
+            return null;
+        }
+
+        return $this->find()
+        ->select([
+            'pref',
+            'city',
+            'address',
+        ])
+        ->where([
+            'zipcode' => $zipcode,
+        ])
+        ->enableHydration(false)
+        ->toArray();
+    }
 }
