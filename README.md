@@ -10,6 +10,16 @@ The recommended way to install composer packages is:
 composer require imo-tikuwa/cakephp-zipcode-jp
 ```
 
+Load the plugin in Application.php.
+```
+class Application extends BaseApplication
+{
+    public function bootstrap()
+    {
+        $this->addPlugin('ZipcodeJp', ['routes' => true]);
+    }
+```
+
 ## Initialization
 ```
 bin\cake.bat migrations migrate --plugin ZipcodeJp
