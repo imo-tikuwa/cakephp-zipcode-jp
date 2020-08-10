@@ -12,3 +12,12 @@ Router::plugin(
         $routes->fallbacks(DashedRoute::class);
     }
 );
+
+Router::plugin(
+    'ZipcodeJp',
+    ['path' => '/zipcode-jp-test'],
+    function (RouteBuilder $routes) {
+        $routes->connect('/', ['controller' => 'Test', 'action' => 'index']);
+        $routes->fallbacks(DashedRoute::class);
+    }
+);
