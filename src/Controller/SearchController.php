@@ -22,7 +22,7 @@ class SearchController extends AppController
         $this->loadComponent('RequestHandler');
         $this->viewBuilder()->setClassName('Json');
 
-        $this->loadModel('ZipcodeJps');
+        $this->loadModel('ZipcodeJp.ZipcodeJps');
     }
 
     /**

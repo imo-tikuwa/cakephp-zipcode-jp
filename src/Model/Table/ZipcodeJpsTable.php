@@ -95,6 +95,6 @@ class ZipcodeJpsTable extends Table
             'zipcode' => $zipcode,
         ])
         ->enableHydration(false)
-        ->toArray();
+        ->first();
     }
 }
