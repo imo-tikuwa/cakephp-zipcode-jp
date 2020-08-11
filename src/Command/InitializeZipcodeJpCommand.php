@@ -6,6 +6,7 @@ use Cake\Console\Arguments;
 use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
+use Psr\Log\LogLevel;
 use SplFileObject;
 use ZipArchive;
 
@@ -49,6 +50,7 @@ class InitializeZipcodeJpCommand extends Command
      */
     public function execute(Arguments $args, ConsoleIo $io)
     {
+        $this->log('initialize_zipcode_jp command start.', LogLevel::INFO);
         ini_set('memory_limit', '1024M');
 
         if (!file_exists(self::ZIP_LOCAL_DIR)) {
@@ -62,11 +64,13 @@ class InitializeZipcodeJpCommand extends Command
         // 展開
         $zip = new ZipArchive();
         if ($zip->open(self::ZIP_LOCAL_PATH) !== true) {
+            $this->log('ken_all.zip failed to open.', LogLevel::ERROR);
             $this->abort(self::CODE_ERROR);
         } elseif ($zip->extractTo(self::ZIP_LOCAL_DIR) !== true) {
-            $zip->close();
+            $this->log('ken_all.zip failed to extract.', LogLevel::ERROR);
             $this->abort(self::CODE_ERROR);
         }
+        $zip->close();
 
         // php7でパースずれが発生しないcsv読み込み（sjis、CRLF）
         // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
@@ -82,6 +86,7 @@ class InitializeZipcodeJpCommand extends Command
         $rows = [];
         foreach($csv as $row) {
             if (count($row) !== 15) {
+                $this->log('Could not get the csv columns correctly.', LogLevel::ERROR);
                 $this->abort(self::CODE_ERROR);
             }
 
@@ -128,6 +133,7 @@ class InitializeZipcodeJpCommand extends Command
         // 既存のデータをトランケートしてから最新のデータを登録
         $this->loadModel('ZipcodeJps');
         $sqls = $this->ZipcodeJps->getSchema()->truncateSql($this->ZipcodeJps->getConnection());
+        $this->log("Truncate the zipcode_jps table.", LogLevel::INFO);
         foreach ($sqls as $sql) {
             $this->ZipcodeJps->getConnection()->execute($sql)->execute();
         }
@@ -144,10 +150,14 @@ class InitializeZipcodeJpCommand extends Command
             ]);
             $count++;
             if ($count % 10000 === 0 || $count === $row_count) {
+                $start = $count - 9999;
+                $this->log("Register the {$start} to {$count} zip code data.", LogLevel::INFO);
                 $query->execute();
                 $query = $this->getZipcodeJpsBulkInsertQuery();
             }
         }
+
+        $this->log('initialize_zipcode_jp command end.', LogLevel::INFO);
     }
 
     /**
