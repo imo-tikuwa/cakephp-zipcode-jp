@@ -96,22 +96,27 @@ class InitializeZipcodeJpCommand extends Command
             $chouiki = $row[8];
             if (array_key_exists($zipcode, $rows)) {
                 // 町域が2行以上に分かれているとき2行目以降をスキップ
+                $this->log($row, LogLevel::DEBUG);
                 continue;
             } elseif ($chouiki === '以下に掲載がない場合') {
                 // 以下のケースのとき町域削除
                 // 01101,"060  ","0600000","ﾎｯｶｲﾄﾞｳ","ｻｯﾎﾟﾛｼﾁｭｳｵｳｸ","ｲｶﾆｹｲｻｲｶﾞﾅｲﾊﾞｱｲ","北海道","札幌市中央区","以下に掲載がない場合",0,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $row[8] = '';
             } elseif (ZipcodeJpUtils::ends_with($chouiki, 'の次に番地がくる場合')) {
                 // 以下のケースのとき町域削除
                 // 08546,"30604","3060433","ｲﾊﾞﾗｷｹﾝ","ｻｼﾏｸﾞﾝｻｶｲﾏﾁ","ｻｶｲﾏﾁﾉﾂｷﾞﾆﾊﾞﾝﾁｶﾞｸﾙﾊﾞｱｲ","茨城県","猿島郡境町","境町の次に番地がくる場合",0,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $row[8] = '';
             } elseif (ZipcodeJpUtils::ends_with($chouiki, '一円') && mb_strlen($chouiki) > 2) {
                 // 以下のケースのとき町域削除
                 // 13362,"10003","1000301","ﾄｳｷｮｳﾄ","ﾄｼﾏﾑﾗ","ﾄｼﾏﾑﾗｲﾁｴﾝ","東京都","利島村","利島村一円",0,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $row[8] = '';
             } elseif (ZipcodeJpUtils::contain($chouiki, '（') && ZipcodeJpUtils::ends_with($chouiki, '階）')) {
                 // 以下のケースのとき町域を加工
                 // 04101,"980  ","9806101","ﾐﾔｷﾞｹﾝ","ｾﾝﾀﾞｲｼｱｵﾊﾞｸ","ﾁｭｳｵｳｱｴﾙ(1ｶｲ)","宮城県","仙台市青葉区","中央アエル（１階）",0,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $replace = [
                     '（' => '',
                     '）' => '',
@@ -120,11 +125,13 @@ class InitializeZipcodeJpCommand extends Command
             } elseif (ZipcodeJpUtils::contain($chouiki, '（') && ZipcodeJpUtils::ends_with($chouiki, '）')) {
                 // 以下のケースのとき町域を加工
                 // 01215,"07901","0790177","ﾎｯｶｲﾄﾞｳ","ﾋﾞﾊﾞｲｼ","ｶﾐﾋﾞﾊﾞｲﾁｮｳ(ｷｮｳﾜ､ﾐﾅﾐ)","北海道","美唄市","上美唄町（協和、南）",1,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $row[8] = mb_substr($chouiki, 0, mb_strpos($chouiki, '（'));
             } elseif (ZipcodeJpUtils::contain($chouiki, '（') && !ZipcodeJpUtils::ends_with($chouiki, '）')) {
                 // 町域が2行以上に分かれているとき1行目の町域を加工
                 // 40206,"826  ","8260043","ﾌｸｵｶｹﾝ","ﾀｶﾞﾜｼ","ﾅﾗ(ｱｵﾊﾞﾁｮｳ､ｵｵｳﾗ､ｶｲｼｬﾏﾁ､ｶｽﾐｶﾞｵｶ､ｺﾞﾄｳｼﾞﾆｼﾀﾞﾝﾁ､ｺﾞﾄｳｼﾞﾋｶﾞｼﾀﾞﾝﾁ､ﾉｿﾞﾐｶﾞｵｶ､","福岡県","田川市","奈良（青葉町、大浦、会社町、霞ケ丘、後藤寺西団地、後藤寺東団地、希望ケ丘、",0,0,0,0,0,0
                 // 40206,"826  ","8260043","ﾌｸｵｶｹﾝ","ﾀｶﾞﾜｼ","ﾏﾂﾉｷ､ﾐﾂｲｺﾞﾄｳｼﾞ､ﾐﾄﾞﾘﾏﾁ､ﾂｷﾐｶﾞｵｶ)","福岡県","田川市","松の木、三井後藤寺、緑町、月見ケ丘）",0,0,0,0,0,0
+                $this->log($row, LogLevel::DEBUG);
                 $row[8] = mb_substr($chouiki, 0, mb_strpos($chouiki, '（'));
             }
             $rows[$zipcode] = $row;
@@ -139,8 +146,9 @@ class InitializeZipcodeJpCommand extends Command
         }
 
         $query = $this->getZipcodeJpsBulkInsertQuery();
-        $count = 0;
         $row_count = count($rows);
+        $from_count = 1;
+        $to_count = 1;
         foreach ($rows as $row) {
             $query->values([
                 'zipcode' => $row[2],
@@ -148,13 +156,13 @@ class InitializeZipcodeJpCommand extends Command
                 'city' => $row[7],
                 'address' => $row[8],
             ]);
-            $count++;
-            if ($count % 10000 === 0 || $count === $row_count) {
-                $start = $count - 9999;
-                $this->log("Register the {$start} to {$count} zip code data.", LogLevel::INFO);
+            if ($to_count % 10000 === 0 || $to_count === $row_count) {
+                $this->log(sprintf('Register the %d to %d zip code data.', $from_count, $to_count) , LogLevel::INFO);
+                $from_count = $to_count + 1;
                 $query->execute();
                 $query = $this->getZipcodeJpsBulkInsertQuery();
             }
+            $to_count++;
         }
 
         $this->log('initialize_zipcode_jp command end.', LogLevel::INFO);
