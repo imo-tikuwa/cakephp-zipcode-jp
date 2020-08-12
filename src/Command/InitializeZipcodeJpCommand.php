@@ -51,6 +51,7 @@ class InitializeZipcodeJpCommand extends Command
     public function execute(Arguments $args, ConsoleIo $io)
     {
         $this->log('initialize_zipcode_jp command start.', LogLevel::INFO);
+        $time_start = microtime(true);
         ini_set('memory_limit', '1024M');
 
         if (!file_exists(self::ZIP_LOCAL_DIR)) {
@@ -163,7 +164,7 @@ class InitializeZipcodeJpCommand extends Command
             $to_count++;
         }
 
-        $this->log('initialize_zipcode_jp command end.', LogLevel::INFO);
+        $this->log(sprintf('initialize_zipcode_jp command end. took %f secs.', microtime(true) - $time_start), LogLevel::INFO);
     }
 
     /**
