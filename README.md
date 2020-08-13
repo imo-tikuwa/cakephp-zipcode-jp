@@ -36,3 +36,29 @@ $zipcode = '1010032';
 $this->loadModel('ZipcodeJp.ZipcodeJps');
 $result = $this->ZipcodeJps->findByZipcode($zipcode);
 ```
+
+## Usage(client side)
+```html
+<input type="text" id="zipcode" maxlength="7" placeholder="ここに郵便番号を入力" />
+```
+```js
+$("#zipcode").on("keyup", function(){
+    $("#pref").text('');
+    $("#city").text('');
+    $("#address").text('');
+    if ($(this).val().length == 7) {
+        let requesturl = '/zipcode-jp/' + $(this).val() + '.json';
+        $.ajax({
+            type: 'get',
+            url: requesturl,
+            dataType: 'json'
+        }).done(function(result) {
+            if (result != null) {
+                $("#pref").text(result['pref']);
+                $("#city").text(result['city']);
+                $("#address").text(result['address']);
+            }
+        });
+    }
+});
+```
