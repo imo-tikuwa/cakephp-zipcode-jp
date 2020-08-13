@@ -6,6 +6,7 @@ use Cake\Console\Arguments;
 use Cake\Console\Command;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
+use Cake\Datasource\ConnectionManager;
 use Psr\Log\LogLevel;
 use SplFileObject;
 use ZipArchive;
@@ -56,6 +57,10 @@ class InitializeZipcodeJpCommand extends Command
 
         if (!file_exists(self::ZIP_LOCAL_DIR)) {
             mkdir(self::ZIP_LOCAL_DIR);
+        }
+        if (!in_array('zipcode_jps', ConnectionManager::get('default')->getSchemaCollection()->listTables(), true)) {
+            $this->log('There is no zipcode_jps table in the default connection. Please execute migration first.', LogLevel::ERROR);
+            $this->abort(self::CODE_ERROR);
         }
 
         // 最新のマスタデータをダウンロード
