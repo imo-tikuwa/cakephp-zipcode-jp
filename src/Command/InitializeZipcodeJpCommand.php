@@ -61,6 +61,7 @@ class InitializeZipcodeJpCommand extends Command
         // 最新のマスタデータをダウンロード
         $file = file_get_contents(self::ZIPCODE_DATA_URL);
         file_put_contents(self::ZIP_LOCAL_PATH, $file, LOCK_EX);
+        $this->log('Download of postal code data completed.', LogLevel::INFO);
 
         // 展開
         $zip = new ZipArchive();
@@ -72,6 +73,7 @@ class InitializeZipcodeJpCommand extends Command
             $this->abort(self::CODE_ERROR);
         }
         $zip->close();
+        $this->log('The zip file of the postal code data has been expanded.', LogLevel::INFO);
 
         // php7でパースずれが発生しないcsv読み込み（sjis、CRLF）
         // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
@@ -84,11 +86,19 @@ class InitializeZipcodeJpCommand extends Command
             SplFileObject::SKIP_EMPTY |
             SplFileObject::READ_CSV
         );
+        $this->log('Loaded KEN_ALL.csv.', LogLevel::INFO);
+
         $rows = [];
-        foreach($csv as $row) {
+        foreach($csv as $csv_row_index => $row) {
             if (count($row) !== 15) {
                 $this->log('Could not get the csv columns correctly.', LogLevel::ERROR);
                 $this->abort(self::CODE_ERROR);
+            }
+
+            // CSVについて10000行ごとに処理中の行番号を出力
+            $csv_row_count = $csv_row_index + 1;
+            if ($csv_row_count % 10000 === 0) {
+                $this->log("Processing {$csv_row_count} CSV data.", LogLevel::INFO);
             }
 
             // 郵便番号データの加工処理
@@ -135,6 +145,7 @@ class InitializeZipcodeJpCommand extends Command
             }
             $rows[$zipcode] = $row;
         }
+        $this->log("Processed {$csv_row_count} CSV data.", LogLevel::INFO);
 
         // 既存のデータをトランケートしてから最新のデータを登録
         $this->loadModel('ZipcodeJps');
