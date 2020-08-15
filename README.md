@@ -22,7 +22,7 @@ class Application extends BaseApplication
 ```
 
 ## Initialization
-Execute migration to create `zipcode_jps` table.
+Execute migration to create `zipcode_jps` table.  
 When you execute the `initialize_zipcode_jp` command, the latest postal code data of Japan Post will be acquired and stored in the database.
 ```
 bin\cake.bat migrations migrate --plugin ZipcodeJp
