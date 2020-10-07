@@ -16,7 +16,7 @@ class SearchController extends AppController
      * {@inheritDoc}
      * before filter
      */
-    public function beforeFilter(Event $event)
+    public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
         $this->loadComponent('RequestHandler');
