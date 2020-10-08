@@ -3,9 +3,10 @@ namespace ZipcodeJp\Command;
 
 use ZipcodeJp\Util\ZipcodeJpUtils;
 use Cake\Console\Arguments;
-use Cake\Console\Command;
+use Cake\Command\Command;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
+use Cake\Database\Schema\TableSchema;
 use Cake\Datasource\ConnectionManager;
 use Psr\Log\LogLevel;
 use SplFileObject;
@@ -35,7 +36,7 @@ class InitializeZipcodeJpCommand extends Command
      * @param \Cake\Console\ConsoleOptionParser $parser The parser to be defined
      * @return \Cake\Console\ConsoleOptionParser The built parser.
      */
-    public function buildOptionParser(ConsoleOptionParser $parser)
+    public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser = parent::buildOptionParser($parser);
 
@@ -148,7 +149,7 @@ class InitializeZipcodeJpCommand extends Command
 
         // 既存のデータをトランケートしてから最新のデータを登録
         $this->loadModel('ZipcodeJps');
-        $sqls = $this->ZipcodeJps->getSchema()->truncateSql($this->ZipcodeJps->getConnection());
+        $sqls = (new TableSchema($this->ZipcodeJps->getTable()))->truncateSql($this->ZipcodeJps->getConnection());
         $this->log("Truncate the zipcode_jps table.", LogLevel::INFO);
         foreach ($sqls as $sql) {
             $this->ZipcodeJps->getConnection()->execute($sql)->execute();
