@@ -15,6 +15,6 @@ class TestController extends AppController
      */
     public function index()
     {
-        $this->viewBuilder()->setLayout(false);
+        $this->viewBuilder()->disableAutoLayout();
     }
 }

@@ -32,7 +32,7 @@ class SearchController extends AppController
      */
     public function index()
     {
-        $zipcode = $this->request->getParam('zipcode');
+        $zipcode = $this->getRequest()->getParam('zipcode');
         $results = $this->ZipcodeJps->findByZipcode($zipcode);
         $this->set([
             'results' => $results,
