@@ -1,4 +1,4 @@
-# ZipcodeJp plugin for CakePHP
+# ZipcodeJp plugin for CakePHP 3 and 4
 
 ## Installation
 
@@ -7,7 +7,11 @@ You can install this plugin into your CakePHP application using [composer](https
 The recommended way to install composer packages is:
 
 ```
-composer require imo-tikuwa/cakephp-zipcode-jp
+# for CakePHP4
+composer require imo-tikuwa/cakephp-zipcode-jp "2.*"
+
+# for CakePHP3
+composer require imo-tikuwa/cakephp-zipcode-jp "1.*"
 ```
 
 Load the plugin in Application.php.
