@@ -16,7 +16,7 @@ class SearchController extends AppController
      * {@inheritDoc}
      * before filter
      */
-    public function beforeFilter(Event $event)
+    public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
         $this->loadComponent('RequestHandler');
@@ -32,7 +32,7 @@ class SearchController extends AppController
      */
     public function index()
     {
-        $zipcode = $this->request->getParam('zipcode');
+        $zipcode = $this->getRequest()->getParam('zipcode');
         $results = $this->ZipcodeJps->findByZipcode($zipcode);
         $this->set([
             'results' => $results,
