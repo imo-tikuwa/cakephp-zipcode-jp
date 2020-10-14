@@ -7,12 +7,12 @@ namespace ZipcodeJp\Util;
  * @author tikuwa
  *
  */
-class ZipcodeJpUtils {
-
+class ZipcodeJpUtils
+{
     /**
      * 文字列$haystackは$needleを含む？
-     * @param string $haystack
-     * @param string $needle
+     * @param string $haystack 検索の対象文字列
+     * @param string $needle 検索する文字列
      * @return boolean
      */
     public static function contain($haystack, $needle)
@@ -22,22 +22,22 @@ class ZipcodeJpUtils {
 
     /**
      * 文字列$haystackは$needleで始まる？
-     * @param string $haystack
-     * @param string $needle
+     * @param string $haystack 検索の対象文字列
+     * @param string $needle 検索する文字列
      * @return boolean
      */
-    public static function starts_with($haystack, $needle)
+    public static function startsWith($haystack, $needle)
     {
         return $needle === "" || strpos($haystack, $needle) === 0;
     }
 
     /**
      * 文字列$haystackは$needleで終わる？
-     * @param string $haystack
-     * @param string $needle
+     * @param string $haystack 検索の対象文字列
+     * @param string $needle 検索する文字列
      * @return boolean
      */
-    public static function ends_with($haystack, $needle)
+    public static function endsWith($haystack, $needle)
     {
         return $needle === "" || substr($haystack, - strlen($needle)) === $needle;
     }
