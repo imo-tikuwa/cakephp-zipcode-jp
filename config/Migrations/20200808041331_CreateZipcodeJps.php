@@ -5,6 +5,7 @@ class CreateZipcodeJps extends AbstractMigration
 {
     public function up()
     {
+        $this->table('zipcode_jps')->drop()->save();
         $this->table('zipcode_jps')
         ->addColumn('zipcode', 'string', [
             'comment' => '郵便番号',
@@ -26,7 +27,13 @@ class CreateZipcodeJps extends AbstractMigration
             'limit' => 255,
             'null' => false,
         ])
-        ->addIndex(['zipcode'], ['unique' => true, 'name' => 'zipcode_idx'])
+        ->addIndex([
+            'zipcode'
+        ], [
+            'unique' => true,
+            'name' => 'zipcode_idx'
+        ])
+        ->changeComment('郵便番号マスタ')
         ->create();
     }
 
