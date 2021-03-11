@@ -1,7 +1,6 @@
 <?php
 namespace ZipcodeJp\Command;
 
-use ZipcodeJp\Util\ZipcodeJpUtils;
 use Cake\Console\Arguments;
 use Cake\Command\Command;
 use Cake\Console\ConsoleIo;
@@ -118,15 +117,15 @@ class InitializeZipcodeJpCommand extends Command
                 // 以下のケースのとき町域削除
                 // 01101,"060  ","0600000","ﾎｯｶｲﾄﾞｳ","ｻｯﾎﾟﾛｼﾁｭｳｵｳｸ","ｲｶﾆｹｲｻｲｶﾞﾅｲﾊﾞｱｲ","北海道","札幌市中央区","以下に掲載がない場合",0,0,0,0,0,0
                 $row[8] = '';
-            } elseif (ZipcodeJpUtils::endsWith($chouiki, 'の次に番地がくる場合')) {
+            } elseif (str_ends_with($chouiki, 'の次に番地がくる場合')) {
                 // 以下のケースのとき町域削除
                 // 08546,"30604","3060433","ｲﾊﾞﾗｷｹﾝ","ｻｼﾏｸﾞﾝｻｶｲﾏﾁ","ｻｶｲﾏﾁﾉﾂｷﾞﾆﾊﾞﾝﾁｶﾞｸﾙﾊﾞｱｲ","茨城県","猿島郡境町","境町の次に番地がくる場合",0,0,0,0,0,0
                 $row[8] = '';
-            } elseif (ZipcodeJpUtils::endsWith($chouiki, '一円') && mb_strlen($chouiki) > 2) {
+            } elseif (str_ends_with($chouiki, '一円') && mb_strlen($chouiki) > 2) {
                 // 以下のケースのとき町域削除
                 // 13362,"10003","1000301","ﾄｳｷｮｳﾄ","ﾄｼﾏﾑﾗ","ﾄｼﾏﾑﾗｲﾁｴﾝ","東京都","利島村","利島村一円",0,0,0,0,0,0
                 $row[8] = '';
-            } elseif (ZipcodeJpUtils::contain($chouiki, '（') && ZipcodeJpUtils::endsWith($chouiki, '階）')) {
+            } elseif (str_contains($chouiki, '（') && str_ends_with($chouiki, '階）')) {
                 // 以下のケースのとき町域を加工
                 // 04101,"980  ","9806101","ﾐﾔｷﾞｹﾝ","ｾﾝﾀﾞｲｼｱｵﾊﾞｸ","ﾁｭｳｵｳｱｴﾙ(1ｶｲ)","宮城県","仙台市青葉区","中央アエル（１階）",0,0,0,0,0,0
                 $replace = [
@@ -134,7 +133,7 @@ class InitializeZipcodeJpCommand extends Command
                     '）' => '',
                 ];
                 $row[8] = str_replace(array_keys($replace), array_values($replace), $chouiki);
-            } elseif (ZipcodeJpUtils::contain($chouiki, '（')) {
+            } elseif (str_contains($chouiki, '（')) {
                 // 以下のようなケースのとき町域を加工
                 // 01215,"07901","0790177","ﾎｯｶｲﾄﾞｳ","ﾋﾞﾊﾞｲｼ","ｶﾐﾋﾞﾊﾞｲﾁｮｳ(ｷｮｳﾜ､ﾐﾅﾐ)","北海道","美唄市","上美唄町（協和、南）",1,0,0,0,0,0
                 // または、

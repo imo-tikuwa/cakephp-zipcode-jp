@@ -3,7 +3,6 @@ namespace ZipcodeJp\Controller;
 
 use Cake\Event\Event;
 use ZipcodeJp\Controller\AppController;
-use ZipcodeJp\Util\ZipcodeJpUtils;
 
 /**
  * Index Controller
