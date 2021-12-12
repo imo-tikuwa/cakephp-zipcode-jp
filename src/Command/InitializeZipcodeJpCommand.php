@@ -147,7 +147,7 @@ class InitializeZipcodeJpCommand extends Command
         $io->out("Processed {$csv_row_count} CSV data.", 1, ConsoleIo::QUIET);
 
         // 既存のデータをトランケートしてから最新のデータを登録
-        $this->loadModel('ZipcodeJps');
+        $this->ZipcodeJps = $this->fetchTable('ZipcodeJps');
         $sqls = (new TableSchema($this->ZipcodeJps->getTable()))->truncateSql($this->ZipcodeJps->getConnection());
         $io->out("Truncate the zipcode_jps table.", 1, ConsoleIo::QUIET);
         foreach ($sqls as $sql) {
@@ -181,7 +181,7 @@ class InitializeZipcodeJpCommand extends Command
 
     /**
      * zipcode_jpsテーブルにバルクインサートを行うクエリビルダを返す
-     * @return \Cake\Datasource\QueryInterface
+     * @return \Cake\ORM\Query
      */
     private function getZipcodeJpsBulkInsertQuery()
     {

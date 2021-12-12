@@ -37,7 +37,7 @@ bin\cake.bat initialize_zipcode_jp
 ```php
 $zipcode = '1010032';
 
-$this->loadModel('ZipcodeJp.ZipcodeJps');
+$this->ZipcodeJps = $this->fetchTable('ZipcodeJp.ZipcodeJps');
 $result = $this->ZipcodeJps->findByZipcode($zipcode);
 ```
 

@@ -21,7 +21,7 @@ class SearchController extends AppController
         $this->loadComponent('RequestHandler');
         $this->viewBuilder()->setClassName('Json');
 
-        $this->loadModel('ZipcodeJp.ZipcodeJps');
+        $this->ZipcodeJps = $this->fetchTable('ZipcodeJp.ZipcodeJps');
     }
 
     /**
