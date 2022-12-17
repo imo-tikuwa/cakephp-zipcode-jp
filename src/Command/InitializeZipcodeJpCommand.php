@@ -83,7 +83,6 @@ class InitializeZipcodeJpCommand extends Command
 
         // php7でパースずれが発生しないcsv読み込み（sjis、CRLF）
         // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
-        // 参考：https://qiita.com/tiechel/items/468c737b7a2f38f6f1a8
         setlocale(LC_ALL, 'English_United States.1252');
         $csv = new SplFileObject("php://filter/read=convert.iconv.cp932%2Futf-8/resource=" . self::KEN_ALL_CSV_PATH, 'rb');
         $csv->setFlags(

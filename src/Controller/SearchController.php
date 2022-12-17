@@ -1,7 +1,7 @@
 <?php
 namespace ZipcodeJp\Controller;
 
-use Cake\Event\Event;
+use Cake\View\JsonView;
 use ZipcodeJp\Controller\AppController;
 
 /**
@@ -18,8 +18,7 @@ class SearchController extends AppController
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
-        $this->loadComponent('RequestHandler');
-        $this->viewBuilder()->setClassName('Json');
+        $this->viewBuilder()->setClassName(JsonView::class);
 
         $this->ZipcodeJps = $this->fetchTable('ZipcodeJp.ZipcodeJps');
     }
@@ -33,10 +32,10 @@ class SearchController extends AppController
     {
         $zipcode = $this->getRequest()->getParam('zipcode');
         $results = $this->ZipcodeJps->findByZipcode($zipcode);
-        $this->set([
-            'results' => $results,
-            '_serialize' => 'results',
-            '_jsonOptions' => JSON_UNESCAPED_UNICODE
+        $this->set('results', $results);
+        $this->viewBuilder()->setOptions([
+            'serialize' => ['results'],
+            'jsonOptions' => JSON_UNESCAPED_UNICODE
         ]);
     }
 }
